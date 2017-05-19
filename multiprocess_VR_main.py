@@ -63,7 +63,7 @@ def generate_agent(G, X, y, N_data_boundary, w_star, cost_model, **kwargs):
 
 
 if __name__ == '__main__':
-    N_agent = 10
+    N_agent = 1
     G = generate_topology(N_agent, prob=.6)
 
     # X, y = read_cifar()
@@ -81,9 +81,9 @@ if __name__ == '__main__':
     w_star = sk_train(X,y,C)
 
     agent_list = generate_agent(G, X, y, N_data_boundary, w_star, logistic_regression, rho=rho)
-    max_ite = 10000 #N_epoch*N_data_agent_mean
+    max_ite = 5000 #N_epoch*N_data_agent_mean
 
-    mu = 8#0.7
+    mu = 2#0.7
     Data_dist = np.array([a.N for a in agent_list])
     mu_each = mu*Data_dist/sum(Data_dist)*N_agent
     print (mu_each)

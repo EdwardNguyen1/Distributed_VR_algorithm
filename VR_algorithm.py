@@ -1,6 +1,7 @@
 import copy
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.io as sio
 
 
 class VR_algorithm():
@@ -283,5 +284,6 @@ class Multiprocess_VR_agent(VR_algorithm):
 
         if self.name == 'agent 0':
             # print (err)
-            plt.semilogy(err)
-            plt.show()
+            sio.savemat('err.mat', {'err':err} )
+            # plt.semilogy(err)
+            # plt.show()
