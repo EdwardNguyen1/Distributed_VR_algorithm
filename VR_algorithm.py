@@ -247,9 +247,16 @@ class Multiprocess_VR_agent(VR_algorithm):
             print ('neigh_x', np.squeeze(neigh_x).shape)
 
         if style == 'Diffusion':
-            self.cost_model.w = np.average(np.squeeze(neigh_x), weights=weight_x, axis = 0).reshape(-1,1)
+            if weight_x != [1.]:
+                self.cost_model.w = np.average(np.squeeze(neigh_x), weights=weight_x, axis = 0).reshape(-1,1)
+            else:
+                self.cost_model.w = self.phi.copy()
         elif style == 'EXTRA':
-            self.phi = np.average(np.squeeze(neigh_x), weights=weight_x, axis = 0).reshape(-1,1)
+            if weight_x != [1.]:
+                self.phi = np.average(np.squeeze(neigh_x), weights=weight_x, axis = 0).reshape(-1,1)
+            else:
+                self.phi = self.cost_model.w.copy()
+
         
 
     def Performance(self, metric='MSD', w_=None):
