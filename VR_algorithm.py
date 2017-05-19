@@ -291,6 +291,6 @@ class Multiprocess_VR_agent(VR_algorithm):
 
         if self.name == 'agent 0':
             # print (err)
-            sio.savemat('err.mat', {'err':err} )
-            # plt.semilogy(err)
-            # plt.show()
+            # sio.savemat('err.mat', {'err':err} )
+            plt.semilogy(err)
+            plt.show()
