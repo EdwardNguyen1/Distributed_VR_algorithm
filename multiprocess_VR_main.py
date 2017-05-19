@@ -83,11 +83,15 @@ if __name__ == '__main__':
     agent_list = generate_agent(G, X, y, N_data_boundary, w_star, logistic_regression, rho=rho)
     max_ite = 5000 #N_epoch*N_data_agent_mean
 
+<<<<<<< HEAD
     mu = 2#0.7
+=======
+    mu = 8.0#0.7
+>>>>>>> deb8bbfcf44d3a883402784966ba648b67a4d9de
     Data_dist = np.array([a.N for a in agent_list])
     mu_each = mu*Data_dist/sum(Data_dist)*N_agent
     print (mu_each)
-    ps = [Process(target=a.train, args=(mu_each[i], max_ite, 'AVRG', 'Diffusion',), \
+    ps = [Process(target=a.train, args=(mu_each[i], max_ite, 'SVRG', 'Diffusion',), \
                     kwargs = {'err_per_iter': 10, 'metric': 'MSD', 'using_sgd': 2}) \
             for i, a in enumerate(agent_list)]
 
