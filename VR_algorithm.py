@@ -267,7 +267,7 @@ class multi_VR_agent_self(VR_algorithm):
 
         print ('The total adapt-correct-combine time is %f' % self.acc_time)
         print ('The combine time is %f' % self.combine_time)
-        print ('Percent of combine time is %.2f\%' % (self.combine_time / self.acc_time * 100))
+        print ('Percent of combine time is %.2f%%' % (self.combine_time / self.acc_time * 100))
 
         if self.name == 'agent 0':
             # print (err)
