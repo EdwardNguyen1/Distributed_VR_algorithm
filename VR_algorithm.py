@@ -2,6 +2,7 @@ import copy
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io as sio
+import time
 
 
 class VR_algorithm():
@@ -203,6 +204,9 @@ class multi_VR_agent_self(VR_algorithm):
         self.psi_last = np.zeros((self.M,1)) # used for exact diffusion
         self.name = 'agent '+str(kwargs.get('name', 'X'))
 
+        self.combine_time = 0
+        self.acc_time = 0
+
     def adapt(self, mu, ite, method='AVRG', style='Diffusion', **kwargs):
         self.psi_last = self.psi.copy()
         if style == 'Diffusion':
@@ -248,13 +252,22 @@ class multi_VR_agent_self(VR_algorithm):
                 print ("Calculating iteration: ", ite)
 
             # adapt and correct
+            acc_time =time.time()
             self.adapt(mu, ite, method, dist_style, **kwargs)
             self.correct(ite, dist_style)
+
+            c_time = time.time()
             self.combine(ite, dist_style)
+            self.combine_time += float(time.time() - c_time)
+            self.acc_time += float(time.time() - acc_time)
 
             if ite % err_per_iter == 0:
                 err_ = self.Performance(metric=kwargs.get('metric','MSD'))
                 err.append(err_)
+
+        print ('The total adapt-correct-combine time is %f' % self.acc_time)
+        print ('The combine time is %f' % self.combine_time)
+        print ('Percent of combine time is %.2f\%' % (self.combine_time / self.acc_time * 100))
 
         if self.name == 'agent 0':
             # print (err)
