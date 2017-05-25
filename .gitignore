@@ -189,7 +189,6 @@ $RECYCLE.BIN/
 #############
 
 *.pyc
-*.ipynb
 
 # Packages
 *.egg
