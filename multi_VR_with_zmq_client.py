@@ -39,14 +39,14 @@ if __name__ == '__main__':
     context = zmq.Context()
     socket = context.socket(zmq.PAIR)
     port = '6666'
-    socket.connect("tcp://localhost:%s" % port)
+    socket.connect("tcp://192.168.1.102:%s" % port)
     print ("Start connect.....")
 
     # server get last half data
     agent = ZMQ_VR_agent(X[N//2:], y[N//2:], w_star, logistic_regression, socket, rho = rho, name = 1)
     mu = 2.0
-    max_ite = 40000
+    max_ite = 20000
     kwargs = {'err_per_iter': 20, 'metric': 'MSD', 'using_sgd': 2}
-    agent.train(mu, max_ite, 'SVRG', 'Diffusion', **kwargs)
+    agent.train(mu, max_ite, 'AVRG', 'Diffusion', **kwargs)
 
     socket.close()

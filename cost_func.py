@@ -185,3 +185,154 @@ class logistic_regression():
             self.w = np.random.randn(self.M, 1)*0.01
         else:
             self.w = np.zeros( (self.M, 1) ) 
+
+class soft_max():
+    '''
+        solving the min_W mean(   - log ( y_n.T exp(f_n) / sum( exp(f_n) ) ) )  + rho/2\|W\|^F soft_max problem, where f = W * x
+        X --------- N * D (# of instance * # dimension of problem)
+        y --------- N * C 
+        W --------- D * C (# dimension of data * # classes)
+    '''
+    def __init__(self, X, Y, **kwargs):
+        self.X, self.Y = X, Y
+        # xx = {i[0] for i in y}
+        # assert xx=={0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0},  "y should only contain 0, 1, ..., 9"
+        self.N = X.shape[0]
+        self.D = X.shape[1]
+        self.C = Y.shape[1]
+        self.M = self.D * self.C
+
+        self.w = kwargs.get('w', np.zeros((self.M, 1)))
+        assert self.w.shape == (self.M, 1), \
+                    "the shape of given w should be M (M = D * C)"
+        
+        # check whether Y is one-hot coding
+        assert self.Y.ndim == 2, "Y shold be one-hot coding"
+        assert all(np.unique(Y.flatten()) == np.array([0.,1.])),  "y should only contain 0, 1 (one-hot coding)"
+        assert set(np.sum(self.Y, axis=1)) == {1.0}, "Y shold be one-hot coding"        
+
+        self.rho = kwargs.get('rho', 0.01)
+    
+    def partial_gradient(self, index, w_=None):
+        '''
+            return a partial gradient by index
+            if index is none, the function return the gradient based on one (uniformly) random realization
+            if index is not none, the function will return the gradient based on selected index realization
+            index can be int or the list of int
+            index \in [0, N-1]
+        '''
+        w = self.w if w_ is None else w_
+        W = w.reshape(self.D, self.C, order='F')
+        
+        # if index == None:
+        #     index = np.random.randint(self.N, size=1)
+        # # check the format
+        # if isinstance(index, int) or isinstance(index, list) or isinstance(index, np.ndarray):
+        #     pass
+        # else
+        #     raise ValueError("index should be either int or list of int between [0,N-1]")
+        
+        if not isinstance(index, list) and not isinstance(index, np.ndarray): 
+            y_n = self.Y[index,:].reshape(-1, 1)
+            x_n = self.X[index,:].reshape(-1, 1)
+            f_n = W.T.dot(x_n)
+            prob = np.exp(f_n) / np.sum( np.exp(f_n) )
+            partial_grad_mat = (prob - y_n).T * x_n + self.rho * W
+        else:
+            Y_n = self.Y[index,:]
+            X_n = self.X[index,:]
+            F_n = X_n.dot(W)
+            prob = np.exp(F_n) / np.sum( np.exp(F_n), axis=1, keepdims=True)
+            partial_grad_mat = X_n.T.dot(prob - Y_n)/len(index) + self.rho * W
+        
+        return partial_grad_mat.reshape(-1, 1, order = 'F')  
+
+
+    def full_gradient(self, w_=None):
+        w = self.w if w_ is None else w_
+        W = w.reshape(self.D, self.C, order='F')
+
+        F = self.X.dot(W)
+        prob = np.exp(F) / np.sum( np.exp(F), axis=1, keepdims=True)
+        partial_grad_mat = self.X.T.dot(prob - self.Y)/self.N + self.rho * W
+        return partial_grad_mat.reshape(-1, 1, order = 'F')  
+
+    # def partial_func_value(self, index, w_=None):
+    #     w = self.w if w_ is None else w_
+    #     W = w.reshape(self.D, self.C, order='F')
+
+        
+    #   y_n = self.Y[index,:].reshape(-1, 1)
+    #   x_n = self.X[index,:].reshape(-1, 1)
+    #   f_n = W.T.dot(x_n)
+    #   prob = np.exp(f_n) / np.sum( np.exp(f_n) )
+    #   f_value -= np.log( y_n.T.dot(prob) ) / self.N
+        
+    #     return f_value + (self.rho / 2) * np.sum( W *  W)
+
+
+    def func_value(self, w_=None):
+        w = self.w if w_ is None else w_
+        W = w.reshape(self.D, self.C, order='F')
+
+        f_value = 0
+        for index in range(self.N):
+            y_n = self.Y[index,:].reshape(-1, 1)
+            x_n = self.X[index,:].reshape(-1, 1)
+            f_n = W.T.dot(x_n)
+            prob = np.exp(f_n) / np.sum( np.exp(f_n) )
+            f_value -= np.log( y_n.T.dot(prob) ) / self.N
+        
+        return f_value + (self.rho / 2) * np.sum( W *  W)
+            
+    
+    # def gradient_by_data(self, w_=None):
+    #     '''
+    #         return N*M matrix, each row (1*M) is the gradient at w_ defined by one data
+    #     '''
+    #     w = self.w if w_ is None else w_
+        
+    #     exp_val = np.exp(-self.y*self.X.dot(w))
+    #     return self.rho*w.T -  (exp_val/(1+exp_val)*self.y*self.X)
+    
+    # def Hessian(self, w_=None):
+    #     if w_ is None:
+    #         w = self.w
+    #     else:
+    #         w = w_
+            
+    #     exp_val = np.exp(-self.y*self.X.dot(w))
+    #     return self.rho*np.eye(self.M) + self.X.T.dot(exp_val/(1+exp_val)/(1+exp_val)*self.X)/self.N
+
+    def _update_w(self, gradient, mu=0.01):
+        self.w -= mu*gradient
+    
+    def _reset_w(self, rand=False):
+        if rand:
+            self.w = np.random.randn(self.M, 1)*0.01
+        else:
+            self.w = np.zeros( (self.M, 1) ) 
+
+    def GD(self, maxite = 2000, mu = 0.1):
+        for i in range(maxite):
+            if i % 100 == 0:
+                print ('iteration:', i)
+            self.w -= mu*self.full_gradient()
+        return self.w
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
