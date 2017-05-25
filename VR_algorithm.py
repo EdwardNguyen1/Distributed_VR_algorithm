@@ -2,6 +2,7 @@ import copy
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.io as sio
+import time
 
 
 class VR_algorithm():
@@ -16,6 +17,7 @@ class VR_algorithm():
         self.VR_option = {'SVRG': self.SVRG_step,
                        'AVRG': self.AVRG_step,
                        'SAGA': self.SAGA_step}
+                       # 'GD': self.GD_step
 
 
     def SVRG_step(self, ite, **kwargs):
@@ -93,6 +95,10 @@ class VR_algorithm():
 
         return grad_modified
 
+    # def GD_step(self, ite, **kwargs):
+
+    #     return self.cost_model.full_gradient()
+
 
     def train(self, N_epoch=10, mu=0.1, method='SVRG', **kwargs):
         self.MSD = []
@@ -103,12 +109,14 @@ class VR_algorithm():
             self.cost_model._update_w(grad_modifed, mu)
 
             if (ite+1) % self.cost_model.N == 0:
+                print ('epoch: %d' %((ite+1)/self.cost_model.N))
                 err_ = np.sum( (self.cost_model.w - self.w_star)*(self.cost_model.w - self.w_star) ) / self.norm_w_star
                 self.MSD.append(err_)
                 self.ER.append(self.cost_model.func_value() - self.cost_model.func_value(w_ = self.w_star))
 
         return self.MSD, self.ER
 
+    
     def soft_threshold(self, delta):
         self.cost_model.w = np.sign(self.cost_model.w)*( np.maximum(np.abs(self.cost_model.w)-delta, 0) )
 
@@ -130,9 +138,10 @@ class VR_algorithm():
         return self.MSD, self.ER
 
 
-
-
 class Dist_VR_agent(VR_algorithm):
+    '''
+        naive implementation for mimic distributed vr algorithm in single-computer(single process)
+    '''
     def __init__(self, X, y, w_star, cost_model, **kwargs):
         VR_algorithm.__init__(self, X, y, w_star, cost_model, **kwargs)
 
@@ -188,17 +197,22 @@ class Dist_VR_agent(VR_algorithm):
             return None
 
 
-class Multiprocess_VR_agent(VR_algorithm):
-    def __init__(self, X, y, w_star, cost_model, conns, **kwargs):
+class multi_VR_agent_self(VR_algorithm):
+    '''
+        basic self operation for multi-agent VR algorithm, i.e. adapt and correct step and train. 
+        The combination step will be pass which will be overwritten by sub-class based on different implement.
+    '''
+    def __init__(self, X, y, w_star, cost_model, **kwargs):
         VR_algorithm.__init__(self, X, y, w_star, cost_model, **kwargs)
 
-        self.conns = conns
-        self.neighbor = len(conns)
         # for distributed algorithm
         self.phi = np.zeros((self.M,1))
         self.psi = np.zeros((self.M,1))
         self.psi_last = np.zeros((self.M,1)) # used for exact diffusion
         self.name = 'agent '+str(kwargs.get('name', 'X'))
+
+        self.combine_time = 0
+        self.acc_time = 0
 
     def adapt(self, mu, ite, method='AVRG', style='Diffusion', **kwargs):
         self.psi_last = self.psi.copy()
@@ -219,6 +233,74 @@ class Multiprocess_VR_agent(VR_algorithm):
             raise
 
     def combine(self, ite, style='Diffusion'):
+        '''
+        implemented by subclass
+        '''
+        pass
+
+    def Performance(self, metric='MSD', w_=None):
+        w = self.cost_model.w if w_ is None else w_
+
+        if metric == 'MSD':
+            return np.sum( (w - self.w_star)*(w - self.w_star) ) / self.norm_w_star
+        elif metric == 'ER':
+            return self.cost_model.func_value(w_ = w) - self.cost_model.func_value(w_ = self.w_star)
+        else:
+            print ('Unknown metric')
+            return None
+
+    def train(self, mu, max_ite, method = 'AVRG', dist_style = 'Diffusion', **kwargs):
+        err = []
+        # step-size need to adjust
+
+        err_per_iter = kwargs.get('err_per_iter', 1)
+        for ite in range(max_ite):
+            if (ite % 1000) == 0 and self.name == 'agent 0':
+                print ("Calculating iteration: ", ite)
+
+            # adapt and correct
+            acc_time =time.time()
+            self.adapt(mu, ite, method, dist_style, **kwargs)
+            self.correct(ite, dist_style)
+
+            c_time = time.time()
+            self.combine(ite, dist_style)
+            self.combine_time += float(time.time() - c_time)
+            self.acc_time += float(time.time() - acc_time)
+
+            if ite % err_per_iter == 0:
+                err_ = self.Performance(metric=kwargs.get('metric','MSD'))
+                err.append(err_)
+
+        print ('The total adapt-correct-combine time is %f' % self.acc_time)
+        print ('The combine time is %f' % self.combine_time)
+        print ('Percent of combine time is %.2f%%' % (self.combine_time / self.acc_time * 100))
+
+        if self.name == 'agent 0':
+            # print (err)
+            # sio.savemat('err.mat', {'err':err} )
+            plt.semilogy(err)
+            plt.show()
+
+class Multiprocess_VR_agent(multi_VR_agent_self):
+    ''' 
+        implementation of combinational step by multiprocess
+    '''
+    def __init__(self, X, y, w_star, cost_model, conns, **kwargs):
+        '''
+        kwargs usually need to proved the rho(regression coef.) for LR and name (int) for agent
+        '''
+        multi_VR_agent_self.__init__(self, X, y, w_star, cost_model, **kwargs)
+
+        self.conns = conns
+        self.neighbor = len(conns)
+
+        self.name = 'agent '+str(kwargs.get('name', 'X'))
+
+    def combine(self, ite, style='Diffusion'):
+        '''
+        communication through the Pipe of multiprocess
+        '''
         if style not in ['Diffusion', 'EXTRA']:
             print ('Not support %s style' % style)
             raise
@@ -258,39 +340,45 @@ class Multiprocess_VR_agent(VR_algorithm):
             else:
                 self.phi = self.cost_model.w.copy()
 
-        
 
-    def Performance(self, metric='MSD', w_=None):
-        w = self.cost_model.w if w_ is None else w_
+class ZMQ_VR_agent(multi_VR_agent_self):
+    '''
+        implementation of combinational step by zmq
+        currently only support two-node under same LAN communication
+    '''
+    def __init__(self, X, y, w_star, cost_model, socket, **kwargs):
+        '''
+        kwargs usually need to proved the rho(regression coef.) for LR and name (int) for agent
+        '''
+        multi_VR_agent_self.__init__(self, X, y, w_star, cost_model, **kwargs)
 
-        if metric == 'MSD':
-            return np.sum( (w - self.w_star)*(w - self.w_star) ) / self.norm_w_star
-        elif metric == 'ER':
-            return self.cost_model.func_value(w_ = w) - self.cost_model.func_value(w_ = self.w_star)
-        else:
-            print ('Unknown metric')
-            return None
+        self.socket = socket
+        self.neighbor = 2 ## only two nodes
 
-    def train(self, mu, max_ite, method = 'AVRG', dist_style = 'Diffusion', **kwargs):
-        err = []
-        # step-size need to adjust
+        # self.name = 'agent '+str(kwargs.get('name', 'X'))
+        self.name = 'agent 0' #current call for print in all cmd
 
-        err_per_iter = kwargs.get('err_per_iter', 1)
-        for ite in range(max_ite):
-            if (ite % 1000) == 0 and self.name == 'agent 0':
-                print ("Calculating iteration: ", ite)
+    def combine(self, ite, style='Difffusion'):
+        '''
+        communication through the Pipe of multiprocess
+        '''
+        if style not in ['Diffusion', 'EXTRA']:
+            print ('Not support %s style' % style)
+            raise
 
-            # adapt and correct
-            self.adapt(mu, ite, method, dist_style, **kwargs)
-            self.correct(ite, dist_style)
-            self.combine(ite, dist_style)
+        if style == 'Diffusion': 
+            x = {'val': self.phi.tolist(), 'neighbor': 2}
+        elif style == 'EXTRA': 
+            x = {'val': self.cost_model.w.tolist(), 'neighbor': 2}
 
-            if ite % err_per_iter == 0:
-                err_ = self.Performance(metric=kwargs.get('metric','MSD'))
-                err.append(err_)
+        self.socket.send_json(x)
+        recv_x = self.socket.recv_json()
+        # print
+        # if ite == 10:
+        #     print ('recived the shape of w: ',np.array(recv_x[u'val']).shape)
+        #     print (np.array(recv_x[u'val'])[150:170])
 
-        if self.name == 'agent 0':
-            # print (err)
-            # sio.savemat('err.mat', {'err':err} )
-            plt.semilogy(err)
-            plt.show()
+        if style == 'Diffusion':
+            self.cost_model.w = (self.phi + np.array(recv_x[u'val']))/2
+        elif style == 'EXTRA':
+            self.phi = (self.cost_model.w+np.array(recv_x[u'val']))/2
