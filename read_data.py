@@ -48,22 +48,19 @@ def read_cov(**kwargs):
 
     return X_train, y_train[:, np.newaxis]
 
-def read_mnist(**kwargs):
+def read_mnist(datatype ="binary", **kwargs):
     '''
     datatype: 'binary' or 'multiclass'; 'binary' is the default value
     mask_label: has type as list; default value [0, 1, 2, 3, 4]
     '''
     import tensorflow.examples.tutorials.mnist.input_data as input_data
-    datatype = kwargs.get('datatype', "binary")
     # data_percentage = kwargs.get('data_percentage', 0.5)
 
-    if datatype == "binary":
-        try:
-            # replace it by your own path
-            file_loc=os.path.abspath('C:/Users/biche/OneDrive/Documents/Python Scripts/random_reshuffle/MNIST_data') 
-            ds = input_data.read_data_sets(file_loc, one_hot=False)
-        except:
-            ds = input_data.read_data_sets('../data', one_hot=False)
+    # replace it by your own path
+    file_loc='./data/MNIST_data'
+
+    if datatype == "binary":        
+        ds = input_data.read_data_sets(file_loc, one_hot=False)
 
         X = ds.train.images
         y = ds.train.labels
@@ -74,20 +71,15 @@ def read_mnist(**kwargs):
         X_train = normalizer.fit_transform(X)
         y = y[mask]
         y_train = (y-0.5)*2
-        print (y_train)
 
+        # y_train is N*1  vector
         return X_train, y_train[:, np.newaxis]
 
-    if datatype == 'multiclass':
+    elif datatype == 'multiclass':
         mask_label = kwargs.get('mask_label', [0, 1, 2, 3, 4])
-        try:
-            # replace it by your own path
-            file_loc=os.path.abspath('C:/Users/biche/OneDrive/Documents/Python Scripts/random_reshuffle/MNIST_data') 
-            ds_oh = input_data.read_data_sets(file_loc, one_hot=True)
-            ds = input_data.read_data_sets(file_loc, one_hot=False)
-        except:
-            ds_oh = input_data.read_data_sets('../data', one_hot=True)
-            ds = input_data.read_data_sets('../data', one_hot=False)
+        
+        ds_oh = input_data.read_data_sets(file_loc, one_hot=True)
+        ds = input_data.read_data_sets(file_loc, one_hot=False)
 
         X = ds_oh.train.images
         Y = ds_oh.train.labels
@@ -98,11 +90,8 @@ def read_mnist(**kwargs):
         X= X[mask]
         X_train = normalizer.fit_transform(X)
         Y_train = Y[mask]
-        # y = y[mask]
-        # y_train = (y-0.5)*2
-        # print (y_train)
 
-        # return X_train, y_train[:, np.newaxis]
+        # Y_train is N*C matrix with one_hot encoding
         return X_train, Y_train
 
 def read_cifar():
