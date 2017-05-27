@@ -43,7 +43,7 @@ if __name__ == '__main__':
     print ("Start connect.....")
 
     # server get last half data
-    agent = ZMQ_VR_agent(X[N//2:], y[N//2:], w_star, logistic_regression, socket, rho = rho, name = 1)
+    agent = ZMQ_VR_agent(X[N//2:], y[N//2:], w_star, logistic_regression, [socket], rho = rho, name = 1)
     mu = 2.0
     max_ite = 20000
     kwargs = {'err_per_iter': 20, 'metric': 'MSD', 'using_sgd': 2}

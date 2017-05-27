@@ -54,7 +54,7 @@ if __name__ == '__main__':
     print ("Start listening.....")
 
     # server get first half data
-    agent = ZMQ_VR_agent(X_train, Y_train, w_star, soft_max, socket, rho = rho, name = 0)
+    agent = ZMQ_VR_agent(X_train, Y_train, w_star, soft_max, [socket], rho = rho, name = 0)
     mu = 2.0
     max_ite = 50000
     kwargs = {'err_per_iter': 20, 'metric': 'MSD', 'using_sgd': 2}

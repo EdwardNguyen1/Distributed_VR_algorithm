@@ -286,7 +286,7 @@ class Multiprocess_VR_agent(multi_VR_agent_self):
     ''' 
         implementation of combinational step by multiprocess
     '''
-    def __init__(self, X, y, w_star, cost_model, conns, **kwargs):
+    def __init__(self, X, y, w_star, cost_model, conns=None, **kwargs):
         '''
         kwargs usually need to proved the rho(regression coef.) for LR and name (int) for agent
         '''
@@ -305,6 +305,13 @@ class Multiprocess_VR_agent(multi_VR_agent_self):
             print ('Not support %s style' % style)
             raise
 
+        # no nodes is connected to it
+        if self.conns is None:
+            if style == 'Diffusion':
+                self.cost_model.w = self.phi.copy()
+            elif style == 'EXTRA':
+                self.phi = self.cost_model.w.copy()
+
         if style == 'Diffusion': 
             for i in range(self.neighbor):
                 # transform the w into row vector
@@ -320,7 +327,8 @@ class Multiprocess_VR_agent(multi_VR_agent_self):
         for i in range(self.neighbor):
             value, neighbor = self.conns[i].recv()
             neigh_x.append(value)
-            weight_x.append(1/(max(self.neighbor, neighbor))) # metropolis rule
+            weight_x.append(1/(max(self.neighbor+1, neighbor+1))) # metropolis rule, 
+                                                                  # +1 is because conns didn't count self
 
         weight_x[0] = 1 - np.sum(weight_x)
         neigh_x = np.asarray(neigh_x)
@@ -330,15 +338,11 @@ class Multiprocess_VR_agent(multi_VR_agent_self):
             print ('neigh_x', np.squeeze(neigh_x).shape)
 
         if style == 'Diffusion':
-            if weight_x != [1.]:
-                self.cost_model.w = np.average(np.squeeze(neigh_x), weights=weight_x, axis = 0).reshape(-1,1)
-            else:
-                self.cost_model.w = self.phi.copy()
+            self.cost_model.w = np.average(np.squeeze(neigh_x), weights=weight_x, axis = 0).reshape(-1,1)
         elif style == 'EXTRA':
-            if weight_x != [1.]:
-                self.phi = np.average(np.squeeze(neigh_x), weights=weight_x, axis = 0).reshape(-1,1)
-            else:
-                self.phi = self.cost_model.w.copy()
+            self.phi = np.average(np.squeeze(neigh_x), weights=weight_x, axis = 0).reshape(-1,1)
+            
+                
 
 
 class ZMQ_VR_agent(multi_VR_agent_self):
@@ -346,14 +350,14 @@ class ZMQ_VR_agent(multi_VR_agent_self):
         implementation of combinational step by zmq
         currently only support two-node under same LAN communication
     '''
-    def __init__(self, X, y, w_star, cost_model, socket, **kwargs):
+    def __init__(self, X, y, w_star, cost_model, socket=None, **kwargs):
         '''
         kwargs usually need to proved the rho(regression coef.) for LR and name (int) for agent
         '''
         multi_VR_agent_self.__init__(self, X, y, w_star, cost_model, **kwargs)
 
         self.socket = socket
-        self.neighbor = 2 ## only two nodes
+        self.neighbor = len(socket)  if socket is not None else 0 ## only two nodes or no neighbor 
 
         # self.name = 'agent '+str(kwargs.get('name', 'X'))
         self.name = 'agent 0' #current call for print in all cmd
@@ -366,19 +370,26 @@ class ZMQ_VR_agent(multi_VR_agent_self):
             print ('Not support %s style' % style)
             raise
 
-        if style == 'Diffusion': 
-            x = {'val': self.phi.tolist(), 'neighbor': 2}
-        elif style == 'EXTRA': 
-            x = {'val': self.cost_model.w.tolist(), 'neighbor': 2}
+        if self.socket is None:   # self update
+            if style == 'Diffusion':
+                self.cost_model.w = self.phi.copy()
+            elif style == 'EXTRA':
+                self.phi = self.cost_model.w.copy()
 
-        self.socket.send_json(x)
-        recv_x = self.socket.recv_json()
+        if style == 'Diffusion': 
+            x = {'val': self.phi.tolist(), 'neighbor': self.neighbor}
+        elif style == 'EXTRA': 
+            x = {'val': self.cost_model.w.tolist(), 'neighbor': self.neighbor}
+
+        self.socket[0].send_json(x)
+        recv_x = self.socket[0].recv_json()
+
         # print
         # if ite == 10:
         #     print ('recived the shape of w: ',np.array(recv_x[u'val']).shape)
         #     print (np.array(recv_x[u'val'])[150:170])
 
         if style == 'Diffusion':
-            self.cost_model.w = (self.phi + np.array(recv_x[u'val']))/2
+            self.cost_model.w = (self.phi + np.array(recv_x[u'val']))/(self.neighbor + 1)
         elif style == 'EXTRA':
-            self.phi = (self.cost_model.w+np.array(recv_x[u'val']))/2
+            self.phi = (self.cost_model.w+np.array(recv_x[u'val']))/(self.neighbor + 1)
