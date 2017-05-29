@@ -283,7 +283,7 @@ class soft_max():
             prob = np.exp(f_n) / np.sum( np.exp(f_n) )
             f_value -= np.log( y_n.T.dot(prob) ) / self.N
         
-        return np.squeeze(f_value + (self.rho / 2) * np.sum( W *  W))
+        return float(f_value) + (self.rho / 2) * np.sum( W *  W)
             
     
     # def gradient_by_data(self, w_=None):

@@ -194,6 +194,17 @@ class Dist_VR_agent(VR_algorithm):
             print ('Unknown metric')
             return None
 
+    def reset(self):
+        self.cost_model._reset_w()
+        self.grad_at_last =  np.zeros( (self.cost_model.M, self.cost_model.N))
+        self.grad_avg = np.zeros( (self.cost_model.M, 1))
+        self.grad_full_at_start_next = np.zeros(self.cost_model.w.shape)
+        # for distributed algorithm
+        self.phi = np.zeros((self.M,1))
+        self.psi = np.zeros((self.M,1))
+        self.psi_last = np.zeros((self.M,1)) # used for exact diffusion
+
+
 
 class multi_VR_agent_self(VR_algorithm):
     '''
@@ -279,6 +290,16 @@ class multi_VR_agent_self(VR_algorithm):
             # sio.savemat('err.mat', {'err':err} )
             plt.semilogy(err)
             plt.show()
+            
+    def reset(self):
+        self.cost_model._reset_w()
+        self.grad_at_last =  np.zeros( (self.cost_model.M, self.cost_model.N))
+        self.grad_avg = np.zeros( (self.cost_model.M, 1))
+        self.grad_full_at_start_next = np.zeros(self.cost_model.w.shape)
+        # for distributed algorithm
+        self.phi = np.zeros((self.M,1))
+        self.psi = np.zeros((self.M,1))
+        self.psi_last = np.zeros((self.M,1)) # used for exact diffusion
 
 class Multiprocess_VR_agent(multi_VR_agent_self):
     ''' 
