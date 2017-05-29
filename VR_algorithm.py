@@ -330,6 +330,7 @@ class Multiprocess_VR_agent(multi_VR_agent_self):
                 self.cost_model.w = self.phi.copy()
             elif style == 'EXTRA':
                 self.phi = self.cost_model.w.copy()
+            return
 
         if style == 'Diffusion': 
             for i in range(self.neighbor):
@@ -394,6 +395,7 @@ class ZMQ_VR_agent(multi_VR_agent_self):
                 self.cost_model.w = self.phi.copy()
             elif style == 'EXTRA':
                 self.phi = self.cost_model.w.copy()
+            return
 
         if style == 'Diffusion': 
             x = {'val': self.phi.tolist(), 'neighbor': self.neighbor}
