@@ -17,8 +17,6 @@ class VR_algorithm():
         self.VR_option = {'SVRG': self.SVRG_step,
                        'AVRG': self.AVRG_step,
                        'SAGA': self.SAGA_step}
-                       # 'GD': self.GD_step
-
 
     def SVRG_step(self, ite, **kwargs):
         minibatch = kwargs.get('minibatch',1)
@@ -95,11 +93,6 @@ class VR_algorithm():
 
         return grad_modified
 
-    # def GD_step(self, ite, **kwargs):
-
-    #     return self.cost_model.full_gradient()
-
-
     def train(self, N_epoch=10, mu=0.1, method='SVRG', **kwargs):
         self.MSD = []
         self.ER = []
@@ -115,7 +108,6 @@ class VR_algorithm():
                 self.ER.append(self.cost_model.func_value() - self.cost_model.func_value(w_ = self.w_star))
 
         return self.MSD, self.ER
-
     
     def soft_threshold(self, delta):
         self.cost_model.w = np.sign(self.cost_model.w)*( np.maximum(np.abs(self.cost_model.w)-delta, 0) )
@@ -136,6 +128,12 @@ class VR_algorithm():
                                 - self.cost_model.func_value(w_ = self.w_star)- l1_rho*np.sum(np.abs(self.w_star)) )
 
         return self.MSD, self.ER
+
+    def reset(self):
+        self.cost_model._reset_w()
+        self.grad_at_last =  np.zeros( (self.cost_model.M, self.cost_model.N))
+        self.grad_avg = np.zeros( (self.cost_model.M, 1))
+        self.grad_full_at_start_next = np.zeros(self.cost_model.w.shape)
 
 
 class Dist_VR_agent(VR_algorithm):
