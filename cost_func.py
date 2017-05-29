@@ -274,14 +274,10 @@ class soft_max():
     def func_value(self, w_=None):
         w = self.w if w_ is None else w_
         W = w.reshape(self.D, self.C, order='F')
-
-        f_value = 0
-        for index in range(self.N):
-            y_n = self.Y[index,:].reshape(-1, 1)
-            x_n = self.X[index,:].reshape(-1, 1)
-            f_n = W.T.dot(x_n)
-            prob = np.exp(f_n) / np.sum( np.exp(f_n) )
-            f_value -= np.log( y_n.T.dot(prob) ) / self.N
+        
+        F = self.X.dot(W)
+        prob = np.exp(F) / np.sum( np.exp(F), axis=1, keepdims=True )
+        f_value = -np.mean( np.log(np.sum(prob*self.Y, axis=1)) )
         
         return float(f_value) + (self.rho / 2) * np.sum( W *  W)
             
