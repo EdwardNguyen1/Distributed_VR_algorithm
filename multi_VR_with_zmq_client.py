@@ -39,7 +39,8 @@ if __name__ == '__main__':
     context = zmq.Context()
     socket = context.socket(zmq.PAIR)
     port = '6666'
-    socket.connect("tcp://192.168.1.102:%s" % port)
+    state = socket.connect("tcp://127.0.0.1:%s" % port)
+    print (state)
     print ("Start connect.....")
 
     # server get last half data
