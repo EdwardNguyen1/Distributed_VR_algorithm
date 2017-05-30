@@ -11,62 +11,10 @@ app.controller('myCtrl', function($scope, $http, $interval, $timeout, $q) {
     $scope.cost_value = [];
     $scope.iter_list = [];
     $scope.server_client = "server";
-    $scope.one_ip = "192.168.1.102:9999";
+    $scope.one_ip = "127.0.0.1:9999";
     $scope.stop = 1;
     $scope.iter_per_call = 20;
-
-    // for topology plot
-    $scope.plotFunc = function(){
-        $http({
-            method : 'GET',
-            url : '/topo/'+$scope.Num_Node
-        }).then(
-            function mySuccess(response) {
-                plot_func(response.data);
-                // console.log(response.data);
-            }, function myError(response){
-                console.log("Some Error happened during plot topology!");
-            });
-    }
-
-    // for image plot
-    $scope.imshowFunc = function(){
-        $http({
-            method : 'GET',
-            url: '/image'
-        }).then(
-        function success(response){
-            var c=document.getElementById("img_tag");
-            c.src = response.data['img_addr'];
-
-            //-----------failed pixel manipulated approach--------//
-            // var canvas = document.getElementById('image-canvas');
-            // var ctx = canvas.getContext('2d');
-
-            // var img_h = response.data['img_shape'][0];
-            // var img_w = response.data['img_shape'][1];
-
-            // // Get a pointer to the current location in the image.
-            // var palette = ctx.getImageData(0,0,img_w,img_h); //x,y,w,h
-            // palette.data.set(new Uint8ClampedArray(response.data['img_data']));
-            // // Repost the data.
-            // ctx.putImageData(palette,0,0);
-
-            // var imgData = ctx.createImageData(img_h, img_w);
-            // var data = imgData.data;
-
-            // for (var i=0; i<img_h*img_w*4; i++) {
-            //     data[i] = response.data['img_data'][i]
-            // }
-
-            // // now we can draw our imagedata onto the canvas
-            // ctx.putImageData(imgData, 0, 0);
-
-            console.log(response.data);
-        }, function error(response){
-            console.log("Some Error happened during load image!");
-        });
-    }
+    $scope.connect_status = "Not connected";
 
     $scope.connect =function() {
         $http({
@@ -74,9 +22,28 @@ app.controller('myCtrl', function($scope, $http, $interval, $timeout, $q) {
                 url: '/connect',
                 data: {'server_client': $scope.server_client,
                        'ip':  $scope.one_ip}
-        })
+        }).then(function mySuccess(response) {
+                $scope.connect_status = "Connected";
+                // console.log(response.data);
+            }, function myError(response){
+                $scope.connect_status = "Connected failed";
+                console.log("Some Error happened during connected!");
+            });
     }
     
+    $scope.disconnect =function() {
+        $http({
+                method : 'GET',
+                url: '/disconnect',
+        }).then(function mySuccess(response) {
+                $scope.connect_status = "Not connected";
+                // console.log(response.data);
+            }, function myError(response){
+                $scope.connect_status = "Disonnected failed";
+                console.log("Some Error happened during deconnected!");
+            });
+    }
+
     $scope.get_data = function(){
         // stop and reset the running algorithm first
         $scope.stop_alg();
@@ -97,38 +64,6 @@ app.controller('myCtrl', function($scope, $http, $interval, $timeout, $q) {
     }
 
     $scope.run_alg = function(){
-        // $scope.hide_W = false;
-        // stop = $interval(function() {
-        //     $http({
-        //         method : 'POST',
-        //         url: '/run_alg',
-        //         data: {'mu': parseFloat($scope.mu),
-        //                'method':  $scope.method,
-        //                'ite': $scope.iter,
-        //                'dist_style': $scope.dist_style}
-        //    }).then(
-        //     function success(response){
-        //         $scope.hide_W = false;
-        //         var c=document.getElementById("img_tag");
-        //         var port = response.data['running_port'];
-        //         c.src = '/static/visual_W_'+port+'.jpg?random='+new Date().getTime(); // refresh image
-        //         if (response.data['cost_value'] != 'skipped') {
-        //             $scope.cost_value.push(response.data['cost_value'])
-        //             $scope.iter_list.push($scope.iter)
-        //             // console.log($scope.cost_value)
-        //             plot_cost($scope.iter_list, $scope.cost_value)
-        //         }
-
-        //     }, function error(response){
-        //         console.log("Some Error happened during run algorithm!");
-        //         $scope.stop_alg();
-        //         $scope.hide_W = true;
-        //         $scope.iter = 0;
-        //         $scope.cost_value = [];
-        //         $scope.iter_list = [];
-        //     })
-        //     $scope.iter = $scope.iter +50;
-        // }, 1500);
         $scope.hide_W = false;
         $http({
             method : 'POST',

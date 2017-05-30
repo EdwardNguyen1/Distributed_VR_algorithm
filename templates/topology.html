@@ -16,6 +16,8 @@
         <input type="radio" ng-model="server_client" value="server">Server Side
         <input type="radio" ng-model="server_client" value="client">Client Side
         <button ng-click="connect()">Connect {[{ one_ip }]}</button>
+        <span>  {[{ connect_status }]}</span>
+        <button ng-click="disconnect()">disconnect</button>
         </p>
 
         <p> Select Data:
@@ -50,7 +52,7 @@
             <!-- <canvas id="image-canvas" width="200px" height="200px"> </canvas>   -->
             <img id="img_tag" />
           </div>
-          <div id="plot-holder"></div> 
+          <div id="plot-holder" ng-hide='hide_W'></div> 
         </div>
     </div>
 

@@ -1,7 +1,6 @@
 from flask import Flask, render_template, jsonify, request, Response
 app = Flask(__name__)
 
-import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 import os, sys
@@ -12,28 +11,9 @@ from scipy.misc import imresize
 import zmq
 from multiprocessing import Process
 
-def generate_topology(N_node=20, prob=0.25):
-    G=nx.random_geometric_graph(N_node, prob)
-    pos=nx.get_node_attributes(G,'pos')
-
-    dmin=1
-    ncenter=0
-    for n in pos:
-        x,y = pos[n]
-        d=(x-0.5)**2+(y-0.5)**2
-        if d<dmin:
-            ncenter=n
-            dmin=d
-        
-    p=nx.single_source_shortest_path_length(G,ncenter)
-
-    return G
-
 @app.route("/", methods=['GET'])
 def index():
     return render_template("topology.html")
-    # names = {'name': "Bicheng"}
-    # return render_template("layout.html", names=names, language="Python", lang=False, framework='Flask')
 
 @app.route("/topo/<int:N_node>", methods=['GET'])
 def get_top(N_node):
@@ -47,7 +27,7 @@ def get_image():
 
     # return jsonify({'img_data': imglist.ravel().tolist(),
     #                 'img_shape': img.shape})
-    return jsonify({'img_addr': '/static/visual_W.jpg'})
+    return jsonify({'img_addr': '/static/visual_W_5000.jpg'})
 
 def W_to_img(w, **kwargs):
     # save W into images (only supoort 10-class mnist problem now)
@@ -76,7 +56,7 @@ sockets = []
 def get_connections():
     ip_addr = request.json['ip']
     cs = request.json['server_client']
-
+    global sockets
     if cs == "server":
         try:
             context = zmq.Context()
@@ -86,7 +66,6 @@ def get_connections():
             return Response(None)
         except:
             print ("Error happened when connected server")
-            s.closed()
             return Response(status=500)
     elif cs == "client":
         try:
@@ -97,10 +76,16 @@ def get_connections():
             return Response(None)
         except:
             print ("Error happened when connected server")
-            s.closed()
             return Response(status=500)
     else:
         return Response(status=500)
+
+@app.route("/disconnect", methods=['GET'])
+def disconnect():
+    global sockets
+    # [s.closed() for s in sockets]
+    sockets = []
+    return Response(None)
 
 @app.route('/get_data', methods=['POST'])
 def get_data():
