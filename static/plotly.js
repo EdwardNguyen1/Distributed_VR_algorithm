@@ -12,8 +12,9 @@ app.controller('myCtrl', function($scope, $http, $interval, $timeout, $q) {
     $scope.iter_list = [];
     $scope.server_client = "server";
     $scope.one_ip = "127.0.0.1:9999";
-    $scope.stop = 1;
-    $scope.iter_per_call = 20;
+    $scope.stop = 0;
+    $scope.alreadystop = true;
+    $scope.iter_per_call = 5;
     $scope.connect_status = "Not connected";
 
     $scope.connect =function() {
@@ -75,6 +76,7 @@ app.controller('myCtrl', function($scope, $http, $interval, $timeout, $q) {
                    'dist_style': $scope.dist_style}
        }).then(
         function success(response){
+            $scope.alreadystop = false;
             $scope.hide_W = false;
             var c=document.getElementById("img_tag");
             var port = response.data['running_port'];
@@ -91,6 +93,7 @@ app.controller('myCtrl', function($scope, $http, $interval, $timeout, $q) {
                 $timeout(function(){$scope.run_alg();},200);
                 // console.log("enter run branch at iter " + $scope.iter)
             } else {
+                $scope.alreadystop = true;
                 $scope.stop = 0; // re-define it so that next time it will keep running
                 // console.log("enter stop branch")
             }
@@ -105,9 +108,7 @@ app.controller('myCtrl', function($scope, $http, $interval, $timeout, $q) {
     }
 
     $scope.stop_alg = function(){
-        if ($scope.stop === 1) {
-            $scope.stop = 0;
-        } else {
+        if (!$scope.alreadystop) {
             $scope.stop = 1;
         }
     }

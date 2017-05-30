@@ -17,7 +17,7 @@ class VR_algorithm():
         self.VR_option = {'SVRG': self.SVRG_step,
                        'AVRG': self.AVRG_step,
                        'SAGA': self.SAGA_step,
-                       'SGD': self.sgd_step,
+                       'SGD': self.SGD_step,
                        'GD': self.GD_step}
 
     def SVRG_step(self, ite, **kwargs):
