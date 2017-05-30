@@ -48,6 +48,7 @@ def W_to_img(w, **kwargs):
     plt.imsave(save_file,final_W)
 
 # global variable shared between functions
+# this will be potential problem for future multi-process architecture
 vr_alg = None
 X,Y = None, None
 sockets = []
@@ -87,6 +88,8 @@ def disconnect():
     global sockets
     [s.close() for s in sockets]
     sockets = []
+    vr_alg.socket = []
+    vr_alg.neighbor = 0
     return Response(None)
 
 @app.route('/get_data', methods=['POST'])
