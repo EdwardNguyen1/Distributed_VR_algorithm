@@ -17,6 +17,7 @@ class VR_algorithm():
         self.VR_option = {'SVRG': self.SVRG_step,
                        'AVRG': self.AVRG_step,
                        'SAGA': self.SAGA_step}
+                       # 'GD': self.GD_step
 
     def SVRG_step(self, ite, **kwargs):
         minibatch = kwargs.get('minibatch',1)
@@ -93,6 +94,11 @@ class VR_algorithm():
 
         return grad_modified
 
+    # def GD_step(self, ite, **kwargs):
+
+    #     return self.cost_model.full_gradient()
+
+
     def train(self, N_epoch=10, mu=0.1, method='SVRG', **kwargs):
         self.MSD = []
         self.ER = []
@@ -108,6 +114,7 @@ class VR_algorithm():
                 self.ER.append(self.cost_model.func_value() - self.cost_model.func_value(w_ = self.w_star))
 
         return self.MSD, self.ER
+
     
     def soft_threshold(self, delta):
         self.cost_model.w = np.sign(self.cost_model.w)*( np.maximum(np.abs(self.cost_model.w)-delta, 0) )
@@ -194,17 +201,6 @@ class Dist_VR_agent(VR_algorithm):
             print ('Unknown metric')
             return None
 
-    def reset(self):
-        self.cost_model._reset_w()
-        self.grad_at_last =  np.zeros( (self.cost_model.M, self.cost_model.N))
-        self.grad_avg = np.zeros( (self.cost_model.M, 1))
-        self.grad_full_at_start_next = np.zeros(self.cost_model.w.shape)
-        # for distributed algorithm
-        self.phi = np.zeros((self.M,1))
-        self.psi = np.zeros((self.M,1))
-        self.psi_last = np.zeros((self.M,1)) # used for exact diffusion
-
-
 
 class multi_VR_agent_self(VR_algorithm):
     '''
@@ -290,16 +286,7 @@ class multi_VR_agent_self(VR_algorithm):
             # sio.savemat('err.mat', {'err':err} )
             plt.semilogy(err)
             plt.show()
-            
-    def reset(self):
-        self.cost_model._reset_w()
-        self.grad_at_last =  np.zeros( (self.cost_model.M, self.cost_model.N))
-        self.grad_avg = np.zeros( (self.cost_model.M, 1))
-        self.grad_full_at_start_next = np.zeros(self.cost_model.w.shape)
-        # for distributed algorithm
-        self.phi = np.zeros((self.M,1))
-        self.psi = np.zeros((self.M,1))
-        self.psi_last = np.zeros((self.M,1)) # used for exact diffusion
+
 
 class Multiprocess_VR_agent(multi_VR_agent_self):
     ''' 
@@ -361,8 +348,6 @@ class Multiprocess_VR_agent(multi_VR_agent_self):
             self.cost_model.w = np.average(np.squeeze(neigh_x), weights=weight_x, axis = 0).reshape(-1,1)
         elif style == 'EXTRA':
             self.phi = np.average(np.squeeze(neigh_x), weights=weight_x, axis = 0).reshape(-1,1)
-            
-                
 
 
 class ZMQ_VR_agent(multi_VR_agent_self):
@@ -370,14 +355,14 @@ class ZMQ_VR_agent(multi_VR_agent_self):
         implementation of combinational step by zmq
         currently only support two-node under same LAN communication
     '''
-    def __init__(self, X, y, w_star, cost_model, socket=None, **kwargs):
+    def __init__(self, X, y, w_star, cost_model, socket=[], **kwargs):
         '''
         kwargs usually need to proved the rho(regression coef.) for LR and name (int) for agent
         '''
         multi_VR_agent_self.__init__(self, X, y, w_star, cost_model, **kwargs)
 
         self.socket = socket
-        self.neighbor = len(socket)  if socket is not None else 0 ## only two nodes or no neighbor 
+        self.neighbor = len(socket) ## only two nodes or no neighbor 
 
         # self.name = 'agent '+str(kwargs.get('name', 'X'))
         self.name = 'agent 0' #current call for print in all cmd
@@ -390,7 +375,7 @@ class ZMQ_VR_agent(multi_VR_agent_self):
             print ('Not support %s style' % style)
             raise
 
-        if self.socket is None:   # self update
+        if self.neighbor == 0:   # self update
             if style == 'Diffusion':
                 self.cost_model.w = self.phi.copy()
             elif style == 'EXTRA':

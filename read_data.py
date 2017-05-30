@@ -77,7 +77,7 @@ def read_mnist(datatype ="binary", **kwargs):
 
     elif datatype == 'multiclass':
         mask_label = kwargs.get('mask_label', [0, 1, 2, 3, 4])
-        
+       
         ds_oh = input_data.read_data_sets(file_loc, one_hot=True)
 
         X = ds_oh.train.images
