@@ -66,6 +66,7 @@ def get_connections():
             return Response(None)
         except:
             print ("Error happened when connected server")
+            s.close()
             return Response(status=500)
     elif cs == "client":
         try:
@@ -76,6 +77,7 @@ def get_connections():
             return Response(None)
         except:
             print ("Error happened when connected server")
+            s.close()
             return Response(status=500)
     else:
         return Response(status=500)
@@ -83,7 +85,7 @@ def get_connections():
 @app.route("/disconnect", methods=['GET'])
 def disconnect():
     global sockets
-    # [s.closed() for s in sockets]
+    [s.close() for s in sockets]
     sockets = []
     return Response(None)
 
