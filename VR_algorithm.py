@@ -16,8 +16,9 @@ class VR_algorithm():
         self.N, self.M = X.shape[0], X.shape[1]
         self.VR_option = {'SVRG': self.SVRG_step,
                        'AVRG': self.AVRG_step,
-                       'SAGA': self.SAGA_step}
-                       # 'GD': self.GD_step
+                       'SAGA': self.SAGA_step,
+                       'SGD': self.sgd_step,
+                       'GD': self.GD_step}
 
     def SVRG_step(self, ite, **kwargs):
         minibatch = kwargs.get('minibatch',1)
@@ -94,9 +95,22 @@ class VR_algorithm():
 
         return grad_modified
 
-    # def GD_step(self, ite, **kwargs):
+    def SGD_step(self, ite, **kwargs):
+        minibatch = kwargs.get('minibatch',1)
+        N_by_batch = int(np.floor(self.cost_model.N / minibatch))
+        
+        if ite % N_by_batch == 0:
+            self.reorder =  np.random.choice(N_by_batch, N_by_batch, replace=kwargs.get('replace', True))
 
-    #     return self.cost_model.full_gradient()
+        idx = self.reorder[ite % N_by_batch]
+        selected_idx = np.arange(idx*minibatch, (idx+1)*minibatch)
+        grad = self.cost_model.partial_gradient(index=selected_idx)
+
+        return grad
+
+    def GD_step(self, ite, **kwargs):
+
+        return self.cost_model.full_gradient()
 
 
     def train(self, N_epoch=10, mu=0.1, method='SVRG', **kwargs):
