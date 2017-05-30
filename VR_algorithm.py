@@ -98,7 +98,7 @@ class VR_algorithm():
     def SGD_step(self, ite, **kwargs):
         minibatch = kwargs.get('minibatch',1)
         N_by_batch = int(np.floor(self.cost_model.N / minibatch))
-        
+
         if ite % N_by_batch == 0:
             self.reorder =  np.random.choice(N_by_batch, N_by_batch, replace=kwargs.get('replace', True))
 
@@ -369,12 +369,14 @@ class ZMQ_VR_agent(multi_VR_agent_self):
         implementation of combinational step by zmq
         currently only support two-node under same LAN communication
     '''
-    def __init__(self, X, y, w_star, cost_model, socket=[], **kwargs):
+    def __init__(self, X, y, w_star, cost_model, socket=None, **kwargs):
         '''
         kwargs usually need to proved the rho(regression coef.) for LR and name (int) for agent
         '''
         multi_VR_agent_self.__init__(self, X, y, w_star, cost_model, **kwargs)
 
+        if socket is None:
+            socket = []
         self.socket = socket
         self.neighbor = len(socket) ## only two nodes or no neighbor 
 
