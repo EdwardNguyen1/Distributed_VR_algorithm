@@ -11,6 +11,7 @@ from read_data import *
 import networkx as nx
 
 def generate_topology(N_node=20, prob=0.25):
+	''' Generate the topology function'''
     G=nx.random_geometric_graph(N_node, prob)
     pos=nx.get_node_attributes(G,'pos')
 
