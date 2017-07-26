@@ -20,6 +20,46 @@ def get_top(N_node):
     G = generate_topology(N_node, prob=0.5)
     return jsonify({'node': G.node, 'edge': G.edge})
 
+socketlist = []
+iplist = []
+port = []
+count = []
+connectionDict = {}
+
+@app.route("/IP", methods=['GET'])
+def IP():
+    return render_template("getIP.html")
+
+@app.route("/buildtable", methods=['GET'])
+def buildtable(): 
+    print ("Sending ip...")
+    return jsonify({'iplist': iplist})
+
+@app.route("/sendIP", methods=['POST'])
+def retrieveIP():
+    ip_addr = request.json['retrievedIP']
+    iplist.append(ip_addr)
+    return Response(None)
+
+@app.route("/connect", methods=['GET'])
+def connect():
+    portNumber = 5000
+    counter = 1
+    iplistreversed = iplist[::-1]
+    for x in range(len(iplist)):
+        port.append(portNumber)
+        portNumber += 1
+    for y in range(len(iplist)):
+        count.append(counter)
+        counter += 1
+    combinedList = zip(iplist, iplistreversed, port)
+    for k in range(len(combinedList)):
+        connectionDict[k+1]= combinedList[k]
+    print('Success!')
+    for x in iplist:
+        print (x)
+    return Response(None)
+
 @app.route("/image", methods=['GET'])
 def get_image():
     # img = plt.imread('IMG_test.jpg')
