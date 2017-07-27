@@ -1,0 +1,12 @@
+<head>
+  <html lang="en-US">
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>  
+</head>
+<body>
+    <div ng-app="myApp" ng-controller="myCtrl">
+        <button ng-click="sendIP()">Send IP to Server</button>
+        
+    </div>
+
+    <script type="text/javascript" src="{{ url_for('static', filename='index.js') }}"></script>
+</body>
