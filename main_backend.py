@@ -20,10 +20,8 @@ def get_top(N_node):
     G = generate_topology(N_node, prob=0.5)
     return jsonify({'node': G.node, 'edge': G.edge})
 
-socketlist = []
+# please avoid using global variable
 iplist = []
-port = []
-count = []
 connectionDict = {}
 
 @app.route("/IP", methods=['GET'])
@@ -44,17 +42,10 @@ def retrieveIP():
 @app.route("/connect", methods=['GET'])
 def connect():
     portNumber = 5000
-    counter = 1
-    iplistreversed = iplist[::-1]
-    for x in range(len(iplist)):
-        port.append(portNumber)
-        portNumber += 1
-    for y in range(len(iplist)):
-        count.append(counter)
-        counter += 1
-    combinedList = zip(iplist, iplistreversed, port)
-    for k in range(len(combinedList)):
-        connectionDict[k+1]= combinedList[k]
+    ports = range(portNumber, portNumber+len(iplist))
+    combinedList = zip(iplist, iplist[::-1], ports)
+    for k, connect_info in enumerate(combinedList):
+        connectionDict[k+1]= connect_info
     print('Success!')
     for x in iplist:
         print (x)
