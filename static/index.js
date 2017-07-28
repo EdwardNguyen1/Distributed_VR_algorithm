@@ -1,6 +1,8 @@
 var app = angular.module('myApp', []);
 app.controller('myCtrl', function($scope, $http, $interval, $timeout, $q) {
     $scope.tempIP;
+    $scope.data_select = {0:true,  1:true,  2:true,  3:true,  4:true,
+                          5:false, 6:false, 7:false, 8:false, 9:false}
     function askIP() {
         window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;   //compatibility for firefox and chrome
             var pc = new RTCPeerConnection({iceServers:[]}), noop = function(){};      
@@ -22,18 +24,39 @@ app.controller('myCtrl', function($scope, $http, $interval, $timeout, $q) {
                 url: '/sendIP',
                 data: {'sentIP': $scope.tempIP},
         }).then(function mySuccess(response) {
-                console.log('Sent IP!');
+                console.log('Sent IP.');
+                $scope.ip_list = response.data['iplist'];
+                console.log("Received the IP List.")
             });
     };
-    
-    $scope.sendIP =function() {
+
+    $scope.bind = function($index) {
         $http({
                 method : 'POST',
-                url: '/sendIP',
-                data: {'sentIP': $scope.tempIP},
+                url : '/bind',
+                data: {'index': $index},
         }).then(function mySuccess(response) {
-                console.log('Sent IP!');
-            });
+                console.log('Bound.')
+            }); 
+    };
+
+    $scope.connect = function($index) {
+        $http({
+                method : 'POST',
+                url : '/connect',
+                data: {'index': $index},
+        }).then(function mySuccess(response) {
+                console.log('Connected.')
+            }); 
+    };
+    
+    $scope.generateWeights = function() {
+        $http({
+                method : 'GET',
+                url : '/generateWeights',
+        }).then(function mySuccess(response) {
+                console.log('Generated Weights.')
+            }); 
     };
         
 });
