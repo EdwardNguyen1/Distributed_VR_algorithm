@@ -104,7 +104,7 @@ def run_alg():
     dist_style = request.json['dist_style']
     iter_per_call = int(request.json['iter_per_call'])
     print ("data received")
-    while (start_ite < range(max_ite):
+    while (start_ite < max_ite):
         if start_ite == 0:
             vr_alg = ZMQ_VR_agent(X,Y, np.random.randn(28*28*10,1), soft_max, socket=sockets, rho = 1e-4, weights = weight_list)
         vr_alg.adapt(mu, start_ite, method, dist_style)
