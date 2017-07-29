@@ -120,6 +120,6 @@ def run_alg():
 
 
 if __name__ == '__main__':
-    app.run(host='192.168.1.134', debug=False, port = sys.argv[1])
-
-    
+    # sample usage: python backend.py [own private ip addree] [port]
+    # TODO(Edward) set the host ip address automatically
+    app.run(host=sys.argv[1], debug=False, port = sys.argv[2])
