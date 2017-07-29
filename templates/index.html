@@ -37,6 +37,7 @@ table, td {
         <br>
         <p> Algorithm Parameter Setting:    
           <span>step size--<input ng-model="mu" size="2px"></span>
+          <span>max iterations--<input ng-model="max_ite" size="2px"></span>
           <span>method--<select ng-model="method">
             <option value="SVRG">SVRG</option>
             <option value="AVRG">AVRG</option>
@@ -47,6 +48,8 @@ table, td {
             <option value="EXTRA">EXTRA</option>
           </select>
           </span>
+        <br>
+        <button ng-click="run_alg()">Start Running Alg</button>
         </p>   
     </div>
 

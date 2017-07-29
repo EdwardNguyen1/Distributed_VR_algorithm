@@ -2,6 +2,11 @@ var app = angular.module('myApp', []);
 app.controller('myCtrl', function($scope, $http, $interval, $timeout, $q) {
     $scope.tempIP;
     $scope.mu = 0.8;
+    $scope.max_ite = 100;
+    $scope.method = "SVRG";
+    $scope.dist_style = "Diffusion"
+    $scope.iter = 0;
+    $scope.iter_per_call = 5;
     $scope.data_select = {0:true,  1:true,  2:true,  3:true,  4:true,
                           5:false, 6:false, 7:false, 8:false, 9:false}
     function askIP() {
@@ -68,7 +73,22 @@ app.controller('myCtrl', function($scope, $http, $interval, $timeout, $q) {
         }).then(function mySuccess(response){
                console.log("Data fetched")      
         });
-    }
+    };
+
+    $scope.run_alg = function(){
+        $http({
+                method : 'POST',
+                url : '/run_alg',
+                data : {'mu': parseFloat($scope.mu),
+                   'max_ite': $scope.max_ite,
+                   'method':  $scope.method,
+                   'ite': $scope.iter,
+                   'iter_per_call': $scope.iter_per_call,
+                   'dist_style': $scope.dist_style}
+        }).then(function mySuccess(response){
+               console.log("Information passed to backend.")      
+        });
+    };
         
 });
 

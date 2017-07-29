@@ -19,6 +19,7 @@ sockets = []
 connectionDict = {}
 context = zmq.Context()
 weight_list = []
+cost_value_list = []
 
 @app.route("/", methods=['GET'])
 def index():
@@ -94,6 +95,31 @@ def get_data():
     
     return Response(None)
 
+@app.route("/run_alg", methods=['POST'])
+def run_alg():
+    mu = float(request.json['mu'])
+    max_ite = int(request.json['max_ite'])
+    method = request.json['method']
+    start_ite = int(request.json['ite'])
+    dist_style = request.json['dist_style']
+    iter_per_call = int(request.json['iter_per_call'])
+    print ("data received")
+    while (start_ite < range(max_ite):
+        if start_ite == 0:
+            vr_alg = ZMQ_VR_agent(X,Y, np.random.randn(28*28*10,1), soft_max, socket=sockets, rho = 1e-4, weights = weight_list)
+        vr_alg.adapt(mu, start_ite, method, dist_style)
+        vr_alg.correct(start_ite, dist_style)
+        vr_alg.combine(start_ite, dist_style)
+
+        cost_value = vr_alg.cost_model.func_value()
+        cost_value_list.append(cost_value)
+        start_ite = start_ite + iter_per_call
+    plt.plot(cost_value_list)
+    plt.show()
+
+    plt.plot(vr_alg.cost_model.w)
+    plt.show()
+    return Response(None)
 
 
 if __name__ == '__main__':
