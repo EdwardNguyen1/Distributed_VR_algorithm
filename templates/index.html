@@ -22,17 +22,32 @@ table, td {
                 <td>{[{x}]}</td>
                 <td><button ng-click=bind($index)>Bind</button></td>
                 <td><button ng-click=connect($index)>Connect</button></td>
-                <td>Select Data:
+                <td>
                     <span ng-repeat="(i, v) in data_select">
                         {[{i}]} <input type="checkbox" ng-model="dist_style">
                     </span>
+                    <button ng-click="get_data()">Get Data</button>
+                    <span> {[{ fetched }]} </span>
                 </td>
             </tr>
         </table>
         <br>
         <button ng-click="sendIP()">Send IP to Server</button>
         <button ng-click="generateWeights()">Generate Weights</button>  
-
+        <br>
+        <p> Algorithm Parameter Setting:    
+          <span>step size--<input ng-model="mu" size="2px"></span>
+          <span>method--<select ng-model="method">
+            <option value="SVRG">SVRG</option>
+            <option value="AVRG">AVRG</option>
+            <option value="SAGA">SAGA</option>
+          </select>
+          <span>Distributed Style--<select ng-model="dist_style">
+            <option value="Diffusion">Diffusion</option>
+            <option value="EXTRA">EXTRA</option>
+          </select>
+          </span>
+        </p>   
     </div>
 
     <script type="text/javascript" src="{{ url_for('static', filename='index.js') }}"></script>

@@ -1,6 +1,7 @@
 var app = angular.module('myApp', []);
 app.controller('myCtrl', function($scope, $http, $interval, $timeout, $q) {
     $scope.tempIP;
+    $scope.mu = 0.8;
     $scope.data_select = {0:true,  1:true,  2:true,  3:true,  4:true,
                           5:false, 6:false, 7:false, 8:false, 9:false}
     function askIP() {
@@ -58,6 +59,16 @@ app.controller('myCtrl', function($scope, $http, $interval, $timeout, $q) {
                 console.log('Generated Weights.')
             }); 
     };
+
+    $scope.get_data = function(){
+        $http({
+                method : 'POST',
+                url : '/get_data',
+                data : {'mask': $scope.data_select}
+        }).then(function mySuccess(response){
+               console.log("Data fetched")      
+        });
+    }
         
 });
 
