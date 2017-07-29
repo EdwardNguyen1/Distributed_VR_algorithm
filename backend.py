@@ -45,7 +45,7 @@ def bind():
             portnumber = 9999 - index
             connectionDict.update({iplist[index]: str(portnumber)})
             s = context.socket(zmq.PAIR)
-            s.bind("tcp://"+str(iplist[index])+":"+connectionDict[iplist[index]])
+            s.bind("tcp://"+str(iplist[index])+":"+portnumber)
             socketsBind.insert(index,s)
             sockets = socketsBind + socketsConnect
             return Response(None)
@@ -59,7 +59,7 @@ def connect():
     try:
         portnumber = 9999 - index
         s = context.socket(zmq.PAIR)
-        s.connect("tcp://"+str(iplist[index])+":"+connectionDict[iplist[index]])
+        s.connect("tcp://"+str(iplist[index])+":"+portnumber)
         socketsConnect.insert(index,s)
         sockets = socketsBind + socketsConnect
         return Response(None)
@@ -123,6 +123,6 @@ def run_alg():
 
 
 if __name__ == '__main__':
-    app.run(debug=False, port = sys.argv[1])
+    app.run(host='192.168.1.134', debug=False, port = sys.argv[1])
 
     
