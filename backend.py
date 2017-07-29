@@ -13,8 +13,6 @@ import json
 
 
 iplist = []
-socketsBind = []
-socketsConnect = []
 sockets = []
 connectionDict = {}
 context = zmq.Context()
@@ -46,8 +44,7 @@ def bind():
             connectionDict.update({iplist[index]: str(portnumber)})
             s = context.socket(zmq.PAIR)
             s.bind("tcp://"+str(iplist[index])+":"+portnumber)
-            socketsBind.insert(index,s)
-            sockets = socketsBind + socketsConnect
+            sockets.insert(index*2,s)
             return Response(None)
         except:
             print('Already Bound.')
@@ -60,7 +57,7 @@ def connect():
         portnumber = 9999 - index
         s = context.socket(zmq.PAIR)
         s.connect("tcp://"+str(iplist[index])+":"+portnumber)
-        socketsConnect.insert(index,s)
+        sockets.insert(index*2+1,s)
         sockets = socketsBind + socketsConnect
         return Response(None)
     except:
