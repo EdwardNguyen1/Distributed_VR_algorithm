@@ -416,7 +416,6 @@ class Multiprocess_VR_agent(multi_VR_agent_self):
 class ZMQ_VR_agent(multi_VR_agent_self):
     '''
         implementation of combinational step by zmq
-        currently only support two-node under same LAN communication
     '''
     def __init__(self, X, y, w_star, cost_model, socket=None, **kwargs):
         '''
@@ -424,9 +423,7 @@ class ZMQ_VR_agent(multi_VR_agent_self):
         '''
         multi_VR_agent_self.__init__(self, X, y, w_star, cost_model, **kwargs)
 
-        if socket is None:
-            socket = []
-        self.socket = socket
+        self.socket = socket if socket is not None else []
         self.neighbor = len(socket) ## only two nodes or no neighbor 
 
         # self.name = 'agent '+str(kwargs.get('name', 'X'))
@@ -453,7 +450,6 @@ class ZMQ_VR_agent(multi_VR_agent_self):
         elif style == 'EXTRA': 
             x = {'val': self.cost_model.w.tolist(), 'neighbor': self.neighbor}
 
-
         # Send variable to each neighbor
         for nb in range(self.neighbor):
             self.socket[nb].send_json(x)
@@ -465,21 +461,10 @@ class ZMQ_VR_agent(multi_VR_agent_self):
             recv_x = self.socket[nb].recv_json()
             tmp += self.weights[nb+1] * np.array(recv_x[u'val'])
 
-
-            # if style == 'Diffusion':
-            #     self.cost_model.w = (self.phi + np.array(recv_x[u'val']))/(self.neighbor + 1)
-            # elif style == 'EXTRA':
-            #     self.phi = (self.cost_model.w+np.array(recv_x[u'val']))/(self.neighbor + 1)
-
         if style == 'Diffusion':
             self.cost_model.w = tmp
         elif style == 'EXTRA':
             self.phi = tmp
-
-        # print
-        # if ite == 10:
-        #     print ('recived the shape of w: ',np.array(recv_x[u'val']).shape)
-        #     print (np.array(recv_x[u'val'])[150:170])
 
         
 

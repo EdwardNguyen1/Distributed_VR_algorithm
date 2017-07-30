@@ -25,9 +25,9 @@ def index():
 
 @app.route("/sendIP", methods=['POST'])
 def sendIP():
-    retrievedIP = request.json['sentIP']
-    if retrievedIP not in iplist:
-        iplist.append(retrievedIP)
+    IP_address = request.json['sentIP']
+    if IP_address not in iplist:
+        iplist.append(IP_address)
         print ("Added IP.")
     else:
         print ("Already in list.")
@@ -92,6 +92,7 @@ def get_data():
     
     return Response(None)
 
+# TODO(Edward)  Clean the parametering passing through the params instead of data.
 @app.route("/run_alg", methods=['POST'])
 def run_alg():
     mu = float(request.json['mu'])
